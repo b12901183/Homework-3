@@ -66,7 +66,12 @@ class EqualWeightPortfolio:
         """
         TODO: Complete Task 1 Below
         """
+        equal_weight = 1 / len(assets)
+        for asset in assets:
+            self.portfolio_weights[asset] = equal_weight
 
+        # Set weights for the excluded asset to 0
+        self.portfolio_weights[self.exclude] = 0
         """
         TODO: Complete Task 1 Above
         """
@@ -117,7 +122,18 @@ class RiskParityPortfolio:
         """
         TODO: Complete Task 2 Below
         """
+        for i in range(self.lookback + 1, len(df)):
+            # Calculate the rolling volatility (standard deviation of returns)
+            rolling_volatility = df_returns[assets].iloc[i - self.lookback:i].std()
 
+            # Calculate the inverse volatility weights
+            inverse_volatility_weights = 1 / rolling_volatility
+
+            # Normalize the weights
+            normalized_weights = inverse_volatility_weights / inverse_volatility_weights.sum()
+
+            # Assign the weights to the portfolio_weights DataFrame
+            self.portfolio_weights.loc[df.index[i], assets] = normalized_weights
         """
         TODO: Complete Task 2 Above
         """
@@ -192,8 +208,18 @@ class MeanVariancePortfolio:
 
                 # Sample Code: Initialize Decision w and the Objective
                 # NOTE: You can modify the following code
+                
+            
                 w = model.addMVar(n, name="w", ub=1)
-                model.setObjective(w.sum(), gp.GRB.MAXIMIZE)
+
+                # Define the objective function: Minimize (1/2 * w' * Sigma * w) - gamma * mu' * w
+                model.setObjective(w @ mu - (gamma / 2) * (w @ Sigma @ w), gp.GRB.MAXIMIZE)
+                # Add constraint: Sum of weights should be 1 (no leverage constraint)
+                
+                model.addConstr(w.sum() == 1, name="budget")
+
+                # Add constraint: Weights should be non-negative (long-only constraint)
+                model.addConstrs((w[i] >= 0 for i in range(n)), name="long_only")
 
                 """
                 TODO: Complete Task 3 Below

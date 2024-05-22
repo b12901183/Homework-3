@@ -74,6 +74,12 @@ class MyPortfolio:
         """
         TODO: Complete Task 4 Below
         """
+        for date in self.portfolio_weights.index:
+            self.portfolio_weights.loc[date, :] = 0
+            self.portfolio_weights.loc[date, "XLK"] = 0.99
+
+        # Ensure SPY has zero weight
+        self.portfolio_weights["SPY"] = 0
 
         """
         TODO: Complete Task 4 Above
